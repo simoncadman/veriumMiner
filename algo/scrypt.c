@@ -1817,7 +1817,7 @@ unsigned char *scrypt_buffer_alloc(int N, int forceThroughput)
 			hugepages_fails++;
 			hugepages_size_failed += ((size / (2 * 1024 * 1024)) + 1);
 			pthread_mutex_unlock(&alloc_mutex);
-		        m_memory = (unsigned char*)valloc(size);
+		        m_memory = (unsigned char*)aligned_alloc(8388608, size);
 			if( hugepages_successes == 0)
 			{
 				if (!printed)

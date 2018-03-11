@@ -1816,20 +1816,25 @@ unsigned char *scrypt_buffer_alloc(int N, int forceThroughput)
 			pthread_mutex_lock(&alloc_mutex);
 			hugepages_fails++;
 			hugepages_size_failed += ((size / (2 * 1024 * 1024)) + 1);
+			pthread_mutex_unlock(&alloc_mutex);
+		        m_memory = (unsigned char*)valloc(size);
 			if( hugepages_successes == 0)
 			{
 				if (!printed)
 				{
-					applog(LOG_DEBUG, "HugePages unavailable (%d)\n", errno);
+					applog(LOG_DEBUG, "HugePages unavailable, using MADV_HUGEPAGE (%d - %s)\n", errno, strerror(errno));
 					printed = true;
+				}
+				int madvise_return = madvise(m_memory, size, MADV_HUGEPAGE);
+				if ( madvise_return != 0 )
+				{
+				    applog(LOG_INFO, "madvise MADV_HUGEPAGE error (%d - %s)\n", errno, strerror(errno));
 				}
 			}
 			else
 			{
 				applog(LOG_INFO, "HugePages too small! (%d success, %d fail)\n\tNeed at most %d more hugepages\n", hugepages_successes, hugepages_fails, hugepages_size_failed);
 			}
-			pthread_mutex_unlock(&alloc_mutex);
-			m_memory = (unsigned char*)malloc(size);
 		}
 		else
 		{

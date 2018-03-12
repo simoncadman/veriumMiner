@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <features.h>
 
 #ifdef __linux__
 #include <sys/mman.h>
@@ -1817,7 +1818,14 @@ unsigned char *scrypt_buffer_alloc(int N, int forceThroughput)
 			hugepages_fails++;
 			hugepages_size_failed += ((size / (2 * 1024 * 1024)) + 1);
 			pthread_mutex_unlock(&alloc_mutex);
-		        m_memory = (unsigned char*)aligned_alloc(8388608, size);
+                        #ifdef __USE_ISOC11
+                        m_memory = (unsigned char*)aligned_alloc(8388608, size);
+                        applog(LOG_DEBUG, "Using aligned_alloc");
+                        #else
+		        m_memory = (unsigned char*)valloc(size);
+                        applog(LOG_DEBUG, "Using valloc");
+                        #endif
+
 			if( hugepages_successes == 0)
 			{
 				if (!printed)
@@ -1828,7 +1836,8 @@ unsigned char *scrypt_buffer_alloc(int N, int forceThroughput)
 				int madvise_return = madvise(m_memory, size, MADV_HUGEPAGE);
 				if ( madvise_return != 0 )
 				{
-				    applog(LOG_INFO, "madvise MADV_HUGEPAGE error (%d - %s)\n", errno, strerror(errno));
+				    applog(LOG_INFO, "madvise MADV_HUGEPAGE error, using normal malloc (%d - %s)\n", errno, strerror(errno));
+		                    return (unsigned char*)malloc(size);
 				}
 			}
 			else

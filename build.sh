@@ -15,7 +15,9 @@ rm -f config.status
 # Debian 7.7 / Ubuntu 14.04 (gcc 4.7+)
 extracflags="$extracflags -Ofast -flto -fuse-linker-plugin -ftree-loop-if-convert-stores"
 
-if [ ! "0" = `cat /proc/cpuinfo | grep -c avx` ]; then
+if [[ $1 != "" ]]; then
+    extracflags="$extracflags -march=$1"
+elif [ ! "0" = `cat /proc/cpuinfo | grep -c avx` ]; then
     extracflags="$extracflags -march=native"
 fi
 
